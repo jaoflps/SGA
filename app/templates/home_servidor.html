@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGA - Central de Manutenção</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/servidor.css' %}">
+</head>
+<body>
+    
+    <div class="top-navbar mb-5">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 font-weight-bold">
+                <i class="fas fa-tools mr-2"></i> Central de Manutenção
+            </h3>
+            <a href="{% url 'login' %}" class="btn-sair">SAIR</a>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        
+        <div class="row mb-5">
+            <div class="col-md-6 mb-3">
+                <button class="btn btn-dark btn-block btn-custom p-4 shadow-sm" data-toggle="modal" data-target="#modalAcesso">
+                    <i class="fas fa-id-card fa-2x mb-2"></i><br>
+                    <strong>Portaria: Entrada/Saída</strong>
+                </button>
+            </div>
+            <div class="col-md-6 mb-3">
+                <button class="btn btn-info btn-block btn-custom p-4 shadow-sm" data-toggle="modal" data-target="#modalVistoria">
+                    <i class="fas fa-clipboard-check fa-2x mb-2"></i><br>
+                    <strong>Nova Vistoria de Quarto</strong>
+                </button>
+            </div>
+        </div>
+
+        <hr class="mb-5">
+
+        <h4 class="mb-4 font-weight-bold text-secondary"><i class="fas fa-list-ul mr-2"></i> Fila de Chamados</h4>
+        <div class="row justify-content-center">
+            {% for chamado in chamados %}
+            <div class="col-md-12 mb-4" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                <div class="glass-card p-4 d-flex {% if chamado.urgente and chamado.status == 'Pendente' %}border-urgent{% elif chamado.status == 'Em Andamento' %}border-process{% elif chamado.status == 'Resolvido' %}border-done{% endif %}">
+                    
+                    <div class="flex-grow-1 ml-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h3 class="font-weight-bold mb-0 text-dark">{{ chamado.titulo }}</h3>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-user-circle mr-1"></i> {{ chamado.aluno.username }} | 
+                                    <i class="fas fa-calendar-day mr-1"></i> {{ chamado.data_criacao|date:"d/m/Y H:i" }}
+                                </p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                {% if chamado.urgente %}
+                                    <span class="badge badge-danger badge-custom mr-2 shadow-sm">URGENTE</span>
+                                {% endif %}
+                                <span class="badge badge-light badge-custom border">{{ chamado.status }}</span>
+                            </div>
+                        </div>
+
+                        <div class="description-box">
+                            <p class="mb-0">{{ chamado.descricao }}</p>
+                        </div>
+
+                        <div class="d-flex justify-content-center mt-4">
+                            {% if chamado.status == 'Pendente' %}
+                                <a href="{% url 'iniciar_reparo' chamado.id %}" class="btn-action-blue">
+                                    <i class="fas fa-play-circle mr-2"></i> MARCAR EM ANDAMENTO
+                                </a>
+                            {% elif chamado.status == 'Em Andamento' %}
+                                <button class="btn-action-blue" style="background: #27ae60;" data-toggle="modal" data-target="#modalConcluir{{ chamado.id }}">
+                                    <i class="fas fa-check-circle mr-2"></i> FINALIZAR SERVIÇO
+                                </button>
+                            {% else %}
+                                <div class="bg-light px-4 py-2 rounded-pill text-success font-weight-bold">
+                                    <i class="fas fa-check-double mr-2"></i> Resolvido em: {{ chamado.tempo_total }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">Nenhum chamado pendente no momento.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalVistoria" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="border-radius: 25px;">
+                <form method="POST" action="{% url 'realizar_vistoria' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title font-weight-bold">Checklist de Inspeção</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <label class="font-weight-bold">Selecione o Quarto:</label>
+                        <select name="quarto" class="form-control mb-3 shadow-sm">
+                            {% for q in quartos_lista %} 
+                                <option value="{{ q.id }}">{{ q.bloco.nome }} - {{ q.numero }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <div class="custom-control custom-checkbox mb-2">
+                            <input type="checkbox" name="cama" class="custom-control-input" id="checkCama">
+                            <label class="custom-control-label" for="checkCama">Cama Organizada</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-2 text-danger">
+                            <input type="checkbox" name="danos" class="custom-control-input" id="checkDanos">
+                            <label class="custom-control-label font-weight-bold" for="checkDanos">Possui Danos/Avarias</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-2">
+                            <input type="checkbox" name="limpeza" class="custom-control-input" id="checkLimpeza">
+                            <label class="custom-control-label" for="checkLimpeza">Limpeza em Dia</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-3 text-warning">
+                            <input type="checkbox" name="itens" class="custom-control-input" id="checkItens">
+                            <label class="custom-control-label font-weight-bold" for="checkItens">Itens Proibidos Encontrados</label>
+                        </div>
+
+                        <hr>
+                        <label class="font-weight-bold">Foto da Vistoria:</label>
+                        <input type="file" name="foto" class="form-control-file mb-3">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-info btn-block btn-custom font-weight-bold py-3">FINALIZAR INSPEÇÃO</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% for chamado in chamados %}
+    <div class="modal fade" id="modalConcluir{{ chamado.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 25px;">
+                <form method="POST" action="{% url 'concluir_reparo' chamado.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-header bg-success text-white py-4">
+                        <h5 class="modal-title font-weight-bold ml-3">Evidência de Conclusão</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body p-5 text-center">
+                        <p class="text-muted mb-4">Envie a foto do serviço finalizado.</p>
+                        <input type="file" name="foto_depois" class="form-control-file" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btn-block py-3 font-weight-bold" style="border-radius: 15px;">CONCLUIR AGORA</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+<div class="modal fade" id="modalAcesso" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="border-radius: 25px;">
+            <form method="POST" action="{% url 'registrar_movimentacao' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-exchange-alt mr-2"></i> Registro de Portaria</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Tipo:</label>
+                        <select name="tipo" class="form-control" required>
+                            <option value="ENTRADA">Entrada</option>
+                            <option value="SAIDA">Saída</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold">Aluno:</label>
+                        <select name="aluno" class="form-control">
+                            <option value="">--- Selecione se for Aluno ---</option>
+                            {% for aluno in alunos_lista %}
+                                <option value="{{ aluno.id }}">{{ aluno.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <hr>
+                    <p class="text-muted small text-center">Ou preencha se for visitante:</p>
+
+                    <div class="form-group">
+                        <input type="text" name="visitante_nome" class="form-control mb-2" placeholder="Nome do Visitante">
+                        <input type="text" name="visitante_documento" class="form-control" placeholder="Documento">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-dark btn-block btn-custom py-3 font-weight-bold">CONFIRMAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

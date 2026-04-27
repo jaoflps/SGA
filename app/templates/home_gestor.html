@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>SGA - Painel do Gestor</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .nav-tabs .nav-link.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        body { background-color: #f4f7f6; }
+        .card { border-radius: 15px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand font-weight-bold">SGA | Gestão Geral</span>
+            <div class="ml-auto">
+                <span class="text-white mr-3">Olá, Gestor {{ user.username }}</span>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card shadow p-4">
+                    <h2 class="text-center text-primary">Relatórios do Alojamento</h2>
+                    <p class="text-center text-muted">Visualize e monitore todos os dados do sistema em um só lugar.</p>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="tab-alunos" data-toggle="pill" href="#alunos" role="tab">Alunos</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-servidores" data-toggle="pill" href="#servidores" role="tab">Servidores</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="tab-ocorrencias" data-toggle="pill" href="#ocorrencias" role="tab">Ocorrências</a>
+            </li>
+        </ul>
+
+        <div class="tab-content card shadow p-4 bg-white" id="pills-tabContent">
+            
+            <div class="tab-pane fade show active" id="alunos" role="tabpanel">
+                <h4>Lista de Alunos Cadastrados</h4>
+                <table class="table table-hover mt-3">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nome/Username</th>
+                            <th>CPF</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aluno in alunos %}
+                        <tr>
+                            <td>{{ aluno.username }}</td>
+                            <td>{{ aluno.cpf }}</td>
+                            <td><span class="badge badge-success">Ativo</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-pane fade" id="servidores" role="tabpanel">
+                <h4>Lista de Servidores</h4>
+                <table class="table table-hover mt-3">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nome/Username</th>
+                            <th>CPF</th>
+                            <th>Função</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for servidor in servidores %}
+                        <tr>
+                            <td>{{ servidor.username }}</td>
+                            <td>{{ servidor.cpf }}</td>
+                            <td>{{ servidor.tipo }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center">Nenhum servidor cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-pane fade" id="ocorrencias" role="tabpanel">
+                <h4>Todas as Reclamações e Ocorrências</h4>
+                <table class="table table-hover mt-3">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Envolvido</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ocorrencia in reclamacoes %}
+                        <tr>
+                            <td>{{ ocorrencia.data|date:"d/m/Y" }}</td>
+                            <td>{{ ocorrencia.descricao }}</td>
+                            <td>{{ ocorrencia.pessoa.username }}</td>
+                            <td>
+                                <span class="badge badge-danger">Urgente</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center">Nenhuma ocorrência registrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

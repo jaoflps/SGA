@@ -1,0 +1,72 @@
+:root {
+    --primary-color: #1d976c;
+    --secondary-color: #93f9b9;
+    --dark-color: #2c3e50;
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Animação de Entrada */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-color), #116648);
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+}
+
+/* Efeito Glassmorphism nos Cards */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+/* Inputs Modernos */
+.form-control-custom {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    transition: 0.3s;
+}
+
+.form-control-custom:focus {
+    background: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 15px var(--secondary-color) !important;
+}
+
+/* Botões com Glow */
+.btn-glow {
+    background: var(--secondary-color);
+    color: var(--dark-color) !important;
+    font-weight: bold;
+    border-radius: 50px;
+    padding: 12px 30px;
+    transition: 0.4s;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-glow:hover {
+    box-shadow: 0 0 20px var(--secondary-color);
+    transform: scale(1.05);
+}
+
+/* Navbar de Aluno */
+.nav-aluno {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    padding: 15px 25px;
+}

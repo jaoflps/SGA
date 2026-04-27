@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>SGA - Login</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body { background: #116648; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Poppins', sans-serif; }
+        .glass-login {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px);
+            border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px; width: 100%; max-width: 400px; color: white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        .form-control-custom {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important; border-radius: 15px !important; height: 50px;
+        }
+        .form-control-custom::placeholder { color: rgba(255,255,255,0.5); }
+        .btn-glow { background: #93f9b9; color: #116648; font-weight: bold; border-radius: 15px; height: 50px; transition: 0.3s; border: none; }
+        .btn-glow:hover { box-shadow: 0 0 20px #93f9b9; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="glass-login">
+        <h3 class="text-center mb-4 font-weight-bold">Acesse o Portal</h3>
+        {% if erro %}
+            <div class="alert alert-danger small py-2">{{ erro }}</div>
+        {% endif %}
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="small ml-1">CPF (apenas números)</label>
+                <input type="text" name="cpf" class="form-control form-control-custom" placeholder="000.000.000-00" required>
+            </div>
+            <div class="form-group">
+                <label class="small ml-1">Senha</label>
+                <input type="password" name="password" class="form-control form-control-custom" placeholder="********" required>
+            </div>
+            <button type="submit" class="btn btn-glow btn-block mt-4">Entrar com Segurança</button>
+        </form>
+    </div>
+</body>
+</html>

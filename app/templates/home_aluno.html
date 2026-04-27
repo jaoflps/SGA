@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGA - Painel do Aluno</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1d976c;
+            --secondary: #93f9b9;
+            --glass: rgba(255, 255, 255, 0.95);
+            --glass-card: rgba(255, 255, 255, 0.8);
+        }
+
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            color: #2d3436;
+        }
+
+        /* Navbar Glassmorphism */
+        .navbar-custom {
+            background: rgba(29, 151, 108, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Header de Boas-vindas */
+        .welcome-header {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: 0.3s;
+        }
+
+        /* Cards Estilizados */
+        .glass-card {
+            background: var(--glass-card);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        /* Botões Avançados */
+        .btn-custom {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 20px;
+        }
+        .btn-glow {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(29, 151, 108, 0.3);
+        }
+        .btn-glow:hover {
+            color: white;
+            box-shadow: 0 6px 20px rgba(29, 151, 108, 0.5);
+            transform: scale(1.02);
+        }
+
+        /* Tabela Moderna */
+        .table-custom {
+            background: transparent;
+        }
+        .table-custom thead th {
+            border-top: none;
+            color: #636e72;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        /* Status Badges */
+        .status-pendente { background: #ffeaa7; color: #d63031; padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; }
+        
+        /* Modais */
+        .modal-content {
+            border-radius: 25px;
+            border: none;
+            overflow: hidden;
+        }
+        .modal-header { border-bottom: none; }
+        .modal-footer { border-top: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark navbar-custom mb-4 shadow-sm py-3">
+        <div class="container">
+            <span class="navbar-brand font-weight-bold"><i class="fas fa-university mr-2"></i> SGA </span>
+            <div class="ml-auto">
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm btn-custom"><i class="fas fa-power-off"></i> Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        <div class="welcome-header d-flex justify-content-between align-items-center mb-5 p-4 shadow-sm">
+            <div>
+                <h2 class="mb-1 font-weight-bold">Olá, <span class="text-success">{{ request.user.username }}</span>! 👋</h2>
+                <p class="text-muted mb-0">Gerencie sua vida acadêmica e residencial com facilidade.</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <a href="{% url 'perfil' %}" class="btn btn-glow mr-2 btn-custom">
+                    <i class="fas fa-user-astronaut mr-2"></i> Meu Perfil
+                </a>
+            </div>
+        </div>
+
+        <h4 class="mb-4 font-weight-bold text-secondary"><i class="fas fa-home mr-2"></i> Residência Ativa</h4>
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="text-primary font-weight-bold mb-3"><i class="fas fa-door-open mr-2"></i> Localização</h5>
+                    {% if quarto %}
+                        <div class="p-3 bg-light rounded-lg">
+                            <p class="mb-1"><strong>Bloco:</strong> {{ quarto.bloco.nome }}</p>
+                            <p class="mb-0"><strong>Quarto:</strong> <span class="badge badge-primary px-3">{{ quarto.numero }}</span></p>
+                        </div>
+                        <hr>
+                        <h6 class="text-muted small font-weight-bold"><i class="fas fa-scroll mr-1"></i> DIRETRIZES DO BLOCO</h6>
+                        <p class="small text-muted italic">{{ quarto.bloco.regras }}</p>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-bed fa-3x text-light mb-2"></i>
+                            <p class="text-muted">Aguardando alocação de quarto.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100">
+                    <h5 class="text-success font-weight-bold mb-3"><i class="fas fa-users mr-2"></i> Moradores</h5>
+                    <div class="list-group list-group-flush mb-4">
+                        {% for colega in colegas %}
+                            <div class="list-group-item bg-transparent px-0 d-flex align-items-center border-light">
+                                <div class="bg-success text-white rounded-circle mr-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <span class="font-weight-bold">{{ colega.aluno.username }}</span>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted py-3">Quarto individual ou sem colegas alocados.</p>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-outline-warning btn-block btn-custom mt-auto" data-toggle="modal" data-target="#modalTroca">
+                        <i class="fas fa-exchange-alt mr-2"></i> Solicitar Mudança
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-5">
+             <button type="button" class="btn btn-glow btn-lg btn-custom px-5 py-3 shadow" data-toggle="modal" data-target="#modalChamado">
+                <i class="fas fa-tools mr-2"></i> Reportar Problema / Reclamação
+            </button>
+        </div>
+
+        <h4 class="mb-4 font-weight-bold text-secondary"><i class="fas fa-bolt mr-2"></i> Ações Rápidas</h4>
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3">
+                <button class="btn glass-card w-100 p-4 border-0" data-toggle="modal" data-target="#modalDenuncia">
+                    <i class="fas fa-user-secret fa-3x mb-3 text-dark"></i><br>
+                    <span class="font-weight-bold">Denúncia Anônima</span>
+                </button>
+            </div>
+            <div class="col-md-4 mb-3">
+                <button class="btn glass-card w-100 p-4 border-0" data-toggle="modal" data-target="#modalComportamento">
+                    <i class="fas fa-users-slash fa-3x mb-3 text-info"></i><br>
+                    <span class="font-weight-bold">Relatar Conflito</span>
+                </button>
+            </div>
+            <div class="col-md-4 mb-3">
+                <button class="btn glass-card w-100 p-4 border-0" data-toggle="modal" data-target="#modalPerda">
+                    <i class="fas fa-key fa-3x mb-3 text-danger"></i><br>
+                    <span class="font-weight-bold">Perda de Chave</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-card p-4">
+            <h4 class="mb-4 font-weight-bold"><i class="fas fa-list-ul mr-2 text-primary"></i> Seus Chamados</h4>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Categoria</th>
+                            <th>Título</th>
+                            <th>Urgência</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for relato in relatos %}
+                        <tr>
+                            <td class="small">{{ relato.data_criacao|date:"d M, H:i" }}</td>
+                            <td><span class="badge badge-light border text-uppercase">{{ relato.get_categoria_display }}</span></td>
+                            <td class="font-weight-bold">{{ relato.titulo }}</td>
+                            <td>
+                                {% if relato.urgente %}
+                                <span class="badge badge-danger shadow-sm">ALTA</span>
+                                {% else %}
+                                <span class="badge badge-secondary">BAIXA</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="status-pendente">{{ relato.status }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">Nenhum chamado registrado até o momento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalChamado" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-clipboard-list mr-2"></i> Novo Chamado</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data" action="{% url 'criar_chamado' %}">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Título da Ocorrência</label>
+                            <input type="text" name="titulo" class="form-control form-control-lg" placeholder="Ex: Goteira no teto" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="font-weight-bold">Categoria</label>
+                                <select name="categoria" class="form-control" required>
+                                    <option value="ELETRICA">Elétrica</option>
+                                    <option value="HIDRAULICA">Hidráulica</option>
+                                    <option value="BARULHO">Barulho</option>
+                                    <option value="SEGURANCA">Segurança</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" name="urgente" class="custom-control-input" id="switchUrgente">
+                                    <label class="custom-control-label text-danger font-weight-bold" for="switchUrgente">Prioridade Alta (Urgente)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Descrição Detalhada</label>
+                            <textarea name="descricao" class="form-control" rows="3" placeholder="Descreva o que aconteceu..." required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6"><label>Anexar Foto</label><input type="file" name="foto" class="form-control-file" accept="image/*"></div>
+                            <div class="col-md-6"><label>Anexar Vídeo</label><input type="file" name="video" class="form-control-file" accept="video/*"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-custom" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success btn-custom px-4">Abrir Chamado</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTroca" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title font-weight-bold">Solicitar Mudança de Quarto</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="POST" action="{% url 'solicitar_troca' %}">
+                    {% csrf_token %}
+                    <div class="modal-body p-4">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Motivação para a troca:</label>
+                            <textarea name="motivo" class="form-control" rows="4" placeholder="Explique os motivos da sua solicitação..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-warning btn-custom">Confirmar Solicitação</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalDenuncia" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Denúncia Segura (Anônima)</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="POST" action="{% url 'enviar_comunicado' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo" value="DENUNCIA">
+                    <div class="modal-body p-4">
+                        <p class="text-muted small"><i class="fas fa-shield-alt mr-1"></i> Garantimos que sua identidade será preservada.</p>
+                        <textarea name="descricao" class="form-control" rows="4" placeholder="Relate a irregularidade..." required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-dark btn-custom">Enviar Denúncia</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalComportamento" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-users-slash mr-2"></i> Relatar Comportamento</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="POST" action="{% url 'enviar_comunicado' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo" value="COMPORTAMENTO">
+                    <div class="modal-body p-4">
+                        <div class="form-group">
+                            <label class="font-weight-bold">O que aconteceu?</label>
+                            <textarea name="descricao" class="form-control" rows="4" placeholder="Ex: Som alto após as 22h, discussão no corredor..." required></textarea>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" name="anonimo" class="custom-control-input" id="checkAnonimoComp">
+                            <label class="custom-control-label" for="checkAnonimoComp">Desejo relatar de forma anônima</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-info btn-custom text-white">Enviar Relato</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalPerda" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-key mr-2"></i> Aviso de Perda</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form method="POST" action="{% url 'enviar_comunicado' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="tipo" value="PERDA">
+                    <div class="modal-body p-4">
+                        <p class="text-danger font-weight-bold small"><i class="fas fa-exclamation-triangle mr-1"></i> ATENÇÃO!</p>
+                        <p class="small text-muted">A comunicação de perda resultará no bloqueio imediato do acesso anterior por segurança.</p>
+                        <div class="form-group">
+                            <label class="font-weight-bold">Detalhes do Ocorrido</label>
+                            <textarea name="descricao" class="form-control" rows="3" placeholder="Onde e quando você percebeu a perda?" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger btn-custom font-weight-bold">Confirmar Bloqueio e Aviso</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
