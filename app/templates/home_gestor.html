@@ -2,135 +2,450 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>SGA - Painel do Gestor</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGA - Central de Governança</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .nav-tabs .nav-link.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
+        /* Paleta e Fundo Geral */
+        body { background-color: #f4f7fa; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        
+        /* Estilização Premium dos Cards */
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
         }
-        body { background-color: #f4f7f6; }
-        .card { border-radius: 15px; }
+        .card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .card-header { background-color: #fff; border-bottom: 1px solid #f0f2f5; border-radius: 12px 12px 0 0 !important; }
+        
+        /* Cartões de Métricas Superiores */
+        .metric-card { overflow: hidden; position: relative; z-index: 1; }
+        .metric-icon-bg { 
+            position: absolute; 
+            right: -10px; 
+            bottom: -15px; 
+            font-size: 5rem; 
+            opacity: 0.05; 
+            transform: rotate(-10deg); 
+            z-index: -1; 
+        }
+        .icon-box { 
+            width: 48px; height: 48px; 
+            border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.25rem; 
+        }
+
+        /* Abas Dinâmicas (Tabs) Estilo App */
+        .custom-tabs { 
+            border-bottom: none; 
+            background: #fff; 
+            padding: 8px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+            gap: 5px;
+        }
+        .custom-tabs .nav-link { 
+            border: none; 
+            border-radius: 8px; 
+            color: #6c757d; 
+            font-weight: 600; 
+            padding: 10px 20px; 
+            transition: all 0.3s; 
+        }
+        .custom-tabs .nav-link:hover { background-color: #f8f9fa; color: #0d6efd; }
+        .custom-tabs .nav-link.active { 
+            background-color: #0d6efd; 
+            color: #fff; 
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3); 
+        }
+
+        /* Tabelas Limpas */
+        .table-custom th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; color: #adb5bd; border-bottom: 2px solid #f0f2f5; }
+        .table-custom td { vertical-align: middle; border-bottom: 1px solid #f0f2f5; border-top: none; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow">
-        <div class="container">
-            <span class="navbar-brand font-weight-bold">SGA | Gestão Geral</span>
-            <div class="ml-auto">
-                <span class="text-white mr-3">Olá, Gestor {{ user.username }}</span>
-                <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">Sair</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4 py-3">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand fw-bold fs-4"><i class="fa-solid fa-shield-halved text-primary me-2"></i> SGA | <span class="fw-light">Gestão de Alojamentos</span></span>
+            <div class="d-flex align-items-center">
+                <span class="text-light me-4 small opacity-75">Sessão: <strong class="text-white">{{ request.user.username }}</strong></span>
+                <a href="/admin/" class="btn btn-sm btn-outline-light me-2 rounded-pill px-3"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Admin</a>
+                <a href="#" class="btn btn-sm btn-danger rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-power-off"></i></a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card shadow p-4">
-                    <h2 class="text-center text-primary">Relatórios do Alojamento</h2>
-                    <p class="text-center text-muted">Visualize e monitore todos os dados do sistema em um só lugar.</p>
+    <div class="container-fluid px-4 pb-5">
+        
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <h2 class="fw-bold text-dark mb-1">Painel de Controle Unificado</h2>
+                <p class="text-secondary mb-0">Módulos de dados integrados para combate à evasão e manutenção preventiva.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'gestor_exportar_excel' %}" class="btn btn-success shadow-sm rounded-pill px-4 me-2"><i class="fa-solid fa-file-excel me-1"></i> Planilha Geral</a>
+                <button class="btn btn-primary shadow-sm rounded-pill px-4" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Relatório</button>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card metric-card p-4 bg-white h-100">
+                    <i class="fa-solid fa-user-graduate metric-icon-bg text-primary"></i>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">{{ qtd_alunos_alojados }}</h3>
+                    <small class="text-muted fw-semibold text-uppercase">Alunos Alojados</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card metric-card p-4 bg-white h-100">
+                    <i class="fa-solid fa-door-open metric-icon-bg text-info"></i>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="icon-box bg-info bg-opacity-10 text-info"><i class="fa-solid fa-bed"></i></div>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">{{ quartos_vagos }}</h3>
+                    <small class="text-muted fw-semibold text-uppercase">Quartos Livres</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card metric-card p-4 bg-white h-100">
+                    <i class="fa-solid fa-chart-pie metric-icon-bg text-success"></i>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="icon-box bg-success bg-opacity-10 text-success"><i class="fa-solid fa-percent"></i></div>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">{{ taxa_ocupacao }}%</h3>
+                    <small class="text-muted fw-semibold text-uppercase">Taxa de Ocupação</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card metric-card p-4 bg-white h-100">
+                    <i class="fa-solid fa-triangle-exclamation metric-icon-bg text-warning"></i>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="icon-box bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-clipboard-list"></i></div>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">{{ reclamacoes_abertas }}</h3>
+                    <small class="text-muted fw-semibold text-uppercase">Chamados Pendentes</small>
                 </div>
             </div>
         </div>
 
-        <ul class="nav nav-tabs mb-3" id="pills-tab" role="tablist">
+        <ul class="nav custom-tabs mb-4" id="gestorTab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="tab-alunos" data-toggle="pill" href="#alunos" role="tab">Alunos</a>
+                <button class="nav-link active" id="inteligencia-tab" data-bs-toggle="tab" data-bs-target="#inteligencia" type="button" role="tab"><i class="fa-solid fa-chart-line me-2"></i>Inteligência e Custos</button>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="tab-servidores" data-toggle="pill" href="#servidores" role="tab">Servidores</a>
+                <button class="nav-link" id="quartos-tab" data-bs-toggle="tab" data-bs-target="#quartos" type="button" role="tab"><i class="fa-solid fa-building me-2"></i>Estrutura Física</button>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="tab-ocorrencias" data-toggle="pill" href="#ocorrencias" role="tab">Ocorrências</a>
+                <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios" type="button" role="tab"><i class="fa-solid fa-users-gear me-2"></i>Controle de Acessos</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="disciplina-tab" data-bs-toggle="tab" data-bs-target="#disciplina" type="button" role="tab"><i class="fa-solid fa-scale-balanced me-2"></i>Módulo Disciplinar</button>
             </li>
         </ul>
 
-        <div class="tab-content card shadow p-4 bg-white" id="pills-tabContent">
+        <div class="tab-content" id="gestorTabContent">
             
-            <div class="tab-pane fade show active" id="alunos" role="tabpanel">
-                <h4>Lista de Alunos Cadastrados</h4>
-                <table class="table table-hover mt-3">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th>Nome/Username</th>
-                            <th>CPF</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for aluno in alunos %}
-                        <tr>
-                            <td>{{ aluno.username }}</td>
-                            <td>{{ aluno.cpf }}</td>
-                            <td><span class="badge badge-success">Ativo</span></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="text-center">Nenhum aluno cadastrado.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="tab-pane fade show active" id="inteligencia" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-3">
+                                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-microchip text-primary me-2"></i>Dados de Recorrência</h6>
+                            </div>
+                            <div class="card-body px-4">
+                                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                    <div class="d-flex align-items-center"><div class="icon-box bg-danger bg-opacity-10 text-danger me-3" style="width: 36px; height: 36px;"><i class="fa-solid fa-building"></i></div><span class="text-secondary fw-semibold">Gargalo por Bloco:</span></div>
+                                    <span class="fw-bold text-dark fs-5">{% if bloco_mais_problemas %}{{ bloco_mais_problemas.nome }}{% else %}N/A{% endif %}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                    <div class="d-flex align-items-center"><div class="icon-box bg-danger bg-opacity-10 text-danger me-3" style="width: 36px; height: 36px;"><i class="fa-solid fa-bed"></i></div><span class="text-secondary fw-semibold">Acomodação Crítica:</span></div>
+                                    <span class="fw-bold text-dark fs-5">{% if quarto_mais_reclamado %}{{ quarto_mais_reclamado }}{% else %}N/A{% endif %}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                    <div class="d-flex align-items-center"><div class="icon-box bg-warning bg-opacity-10 text-warning me-3" style="width: 36px; height: 36px;"><i class="fa-regular fa-clock"></i></div><span class="text-secondary fw-semibold">Horário de Pico:</span></div>
+                                    <span class="badge bg-light text-dark border fs-6">{{ horario_pico }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-3">
+                                    <div class="d-flex align-items-center"><div class="icon-box bg-secondary bg-opacity-10 text-secondary me-3" style="width: 36px; height: 36px;"><i class="fa-solid fa-bolt"></i></div><span class="text-secondary fw-semibold">Defeito Comum:</span></div>
+                                    <span class="badge bg-secondary fs-6">{{ defeito_mais_comum }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-wallet text-success me-2"></i>Balanço Financeiro</h6>
+                                <button class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalLancamentoCustos"><i class="fa-solid fa-plus me-1"></i> Lançar</button>
+                            </div>
+                            <div class="card-body px-4">
+                                <div class="row text-center g-3 mb-4 mt-2">
+                                    <div class="col-4">
+                                        <div class="p-3 bg-light rounded-3">
+                                            <small class="text-muted text-uppercase fw-bold d-block mb-1">Reparos</small>
+                                            <span class="fs-5 fw-bold text-dark">R$ {{ gastos_manutencao }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3 bg-light rounded-3">
+                                            <small class="text-muted text-uppercase fw-bold d-block mb-1">Água</small>
+                                            <span class="fs-5 fw-bold text-dark">R$ {{ consumo_agua }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3 bg-light rounded-3">
+                                            <small class="text-muted text-uppercase fw-bold d-block mb-1">Luz</small>
+                                            <span class="fs-5 fw-bold text-dark">R$ {{ consumo_luz }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 bg-dark text-white rounded-3 position-relative overflow-hidden mt-auto">
+                                    <i class="fa-solid fa-chart-line metric-icon-bg text-white opacity-25" style="font-size: 8rem; right: -20px; bottom: -30px;"></i>
+                                    <p class="mb-1 text-white-50 fw-semibold text-uppercase letter-spacing">Previsão Estatística (Próx. Mês)</p>
+                                    <h2 class="mb-0 fw-bold text-success">R$ {{ previsao_despesas }} <span class="fs-6 fw-normal text-white-50">+10% Margem</span></h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="tab-pane fade" id="servidores" role="tabpanel">
-                <h4>Lista de Servidores</h4>
-                <table class="table table-hover mt-3">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th>Nome/Username</th>
-                            <th>CPF</th>
-                            <th>Função</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for servidor in servidores %}
-                        <tr>
-                            <td>{{ servidor.username }}</td>
-                            <td>{{ servidor.cpf }}</td>
-                            <td>{{ servidor.tipo }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3" class="text-center">Nenhum servidor cadastrado.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="tab-pane fade" id="quartos" role="tabpanel">
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3">Unidade Habitacional</th>
+                                    <th class="py-3">Capacidade</th>
+                                    <th class="py-3">Status Operacional</th>
+                                    <th class="text-end pe-4 py-3">Ação Administrativa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for q in quartos %}
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box bg-light text-secondary me-3" style="width: 40px; height: 40px;"><i class="fa-solid fa-door-closed"></i></div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">Quarto {{ q.numero }}</h6>
+                                                <small class="text-muted">{{ q.bloco.nome }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3"><span class="badge bg-light text-dark border">{{ q.capacidade }} Leitos</span></td>
+                                    <td class="py-3">
+                                        {% if q.status == 'ATIVO' %}
+                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Operacional</span>
+                                        {% else %}
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-ban me-1"></i> Em Reforma</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4 py-3">
+                                        <a href="{% url 'gestor_status_quarto' pk=q.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if q.status == 'ATIVO' %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                            {% if q.status == 'ATIVO' %}Interditar{% else %}Liberar Quarto{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="tab-pane fade" id="ocorrencias" role="tabpanel">
-                <h4>Todas as Reclamações e Ocorrências</h4>
-                <table class="table table-hover mt-3">
-                    <thead class="thead-dark">
-                        <tr>
-                            <th>Data</th>
-                            <th>Descrição</th>
-                            <th>Envolvido</th>
-                            <th>Tipo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ocorrencia in reclamacoes %}
-                        <tr>
-                            <td>{{ ocorrencia.data|date:"d/m/Y" }}</td>
-                            <td>{{ ocorrencia.descricao }}</td>
-                            <td>{{ ocorrencia.pessoa.username }}</td>
-                            <td>
-                                <span class="badge badge-danger">Urgente</span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center">Nenhuma ocorrência registrada.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="tab-pane fade" id="usuarios" role="tabpanel">
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3">Nome do Usuário</th>
+                                    <th class="py-3">Vínculo</th>
+                                    <th class="py-3">Status / Integridade</th>
+                                    <th class="text-end pe-4 py-3">Moderação de Acesso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for servidor in servidores %}
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://ui-avatars.com/api/?name={{ servidor.username }}&background=e9ecef&color=495057" class="rounded-circle me-3" width="40" height="40" alt="Avatar">
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">{{ servidor.username }}</h6>
+                                                <small class="text-muted">CPF: {{ servidor.cpf }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3"><span class="badge bg-secondary px-3 py-2 rounded-pill">Servidor</span></td>
+                                    <td class="py-3">
+                                        {% if not servidor.aprovado_gestor %}
+                                            <span class="text-warning fw-semibold small"><i class="fa-solid fa-clock me-1"></i> Aguardando Aprovação</span>
+                                        {% else %}
+                                            <span class="text-success fw-semibold small"><i class="fa-solid fa-shield-check me-1"></i> Homologado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4 py-3">
+                                        {% if not servidor.aprovado_gestor %}
+                                            <a href="{% url 'gestor_aprovar_servidor' pk=servidor.pk %}" class="btn btn-sm btn-warning rounded-pill px-3 me-1 fw-semibold">Aprovar</a>
+                                        {% endif %}
+                                        <a href="{% url 'gestor_mudar_status_usuario' pk=servidor.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if servidor.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
+                                            {% if servidor.bloqueado %}Reativar{% else %}Suspender{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                                {% for aluno in alunos %}
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <img src="https://ui-avatars.com/api/?name={{ aluno.username }}&background=cce5ff&color=004085" class="rounded-circle me-3" width="40" height="40" alt="Avatar">
+                                            <div>
+                                                <h6 class="mb-0 fw-bold text-dark">{{ aluno.username }}</h6>
+                                                <small class="text-muted">CPF: {{ aluno.cpf }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3"><span class="badge bg-primary px-3 py-2 rounded-pill">Residente</span></td>
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2 flex-grow-1" style="height: 6px; max-width: 100px; border-radius: 10px;">
+                                                <div class="progress-bar {% if aluno.integridade < 70 %}bg-danger{% else %}bg-success{% endif %}" style="width: {{ aluno.integridade|default:100 }}%"></div>
+                                            </div>
+                                            <span class="small fw-bold {% if aluno.integridade < 70 %}text-danger{% else %}text-success{% endif %}">{{ aluno.integridade|default:100 }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end pe-4 py-3">
+                                        <button class="btn btn-sm btn-outline-warning rounded-pill px-3 me-1 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAdvertencia" onclick="document.getElementById('inputAlunoId').value='{{ aluno.id }}'"><i class="fa-solid fa-gavel me-1"></i> Punir</button>
+                                        <a href="{% url 'gestor_mudar_status_usuario' pk=aluno.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if aluno.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
+                                            {% if aluno.bloqueado %}Reativar{% else %}Suspender{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="disciplina" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-start border-danger border-4">
+                            <div class="card-header bg-white py-3 border-0">
+                                <h6 class="fw-bold mb-0 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>Alunos com Reincidência (Risco de Evasão/Expulsão)</h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-custom align-middle mb-0">
+                                    <thead class="bg-light"><tr><th class="ps-4">Estudante</th><th>Advertências</th><th class="text-end pe-4">Ação</th></tr></thead>
+                                    <tbody>
+                                        {% for r in alunos_reincidentes %}
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-dark">{{ r.username }}</td>
+                                            <td><span class="badge bg-danger rounded-pill px-3 py-2">{{ r.num_adv }} Ocorrências</span></td>
+                                            <td class="text-end pe-4"><a href="{% url 'gestor_mudar_status_usuario' pk=r.pk %}" class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold">Suspender</a></td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="3" class="text-center py-5 text-muted"><div class="icon-box bg-light mx-auto mb-3" style="width:60px; height:60px; font-size:2rem;"><i class="fa-solid fa-check text-success"></i></div>Nenhum aluno em estado crítico.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-white py-3 border-0">
+                                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Mural de Ocorrências e Denúncias</h6>
+                            </div>
+                            <div class="card-body p-0" style="max-height: 350px; overflow-y: auto;">
+                                <ul class="list-group list-group-flush">
+                                    {% for oc in ocorrencias_comportamento %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-start py-3 px-4 border-bottom">
+                                        <div class="ms-2 me-auto">
+                                            <div class="text-dark fw-medium">{{ oc.descricao }}</div>
+                                            <small class="text-muted"><i class="fa-regular fa-clock me-1"></i> {{ oc.data_envio|date:"d M, Y - H:i" }}</small>
+                                        </div>
+                                    </li>
+                                    {% empty %}
+                                    <li class="list-group-item text-center py-5 border-0 text-muted">Mural limpo. Sem denúncias recentes.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <div class="modal fade" id="modalLancamentoCustos" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{% url 'gestor_lancar_custos' %}" method="POST" class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-white border-0" style="border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Registrar Faturas</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3"><label class="form-label text-muted fw-semibold small text-uppercase">Mês de Referência</label><input type="date" name="mes_referencia" required class="form-control form-control-lg bg-light border-0"></div>
+                    <div class="row g-3">
+                        <div class="col-6"><label class="form-label text-muted fw-semibold small text-uppercase">Conta de Água</label><div class="input-group"><span class="input-group-text bg-light border-0">R$</span><input type="number" step="0.01" name="consumo_agua" required class="form-control form-control-lg bg-light border-0"></div></div>
+                        <div class="col-6"><label class="form-label text-muted fw-semibold small text-uppercase">Conta de Luz</label><div class="input-group"><span class="input-group-text bg-light border-0">R$</span><input type="number" step="0.01" name="consumo_luz" required class="form-control form-control-lg bg-light border-0"></div></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light fw-bold px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4 rounded-pill shadow-sm">Salvar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAdvertencia" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{% url 'gestor_emitir_advertencia' %}" method="POST" class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="aluno" id="inputAlunoId">
+                <div class="modal-header bg-danger text-white border-0" style="border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-gavel me-2"></i>Emitir Advertência</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small text-uppercase">Nível de Gravidade</label>
+                        <select name="gravidade" class="form-select form-select-lg bg-light border-0">
+                            <option value="LEVE">🟢 Leve (Aviso Formal)</option>
+                            <option value="MEDIA">🟡 Média (Perda de Integridade)</option>
+                            <option value="GRAVE">🔴 Grave (Suspensão)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-semibold small text-uppercase">Justificativa</label>
+                        <textarea name="motivo" rows="4" required class="form-control bg-light border-0" placeholder="Descreva o motivo da punição..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light fw-bold px-4 rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger fw-bold px-4 rounded-pill shadow-sm">Confirmar Punição</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

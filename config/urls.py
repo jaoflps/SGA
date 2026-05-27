@@ -30,6 +30,23 @@ urlpatterns = [
     path('concluir-reparo/<int:pk>/', concluir_reparo, name='concluir_reparo'),
     path('registrar-movimentacao/', registrar_movimentacao, name='registrar_movimentacao'),
     path('realizar-vistoria/', realizar_vistoria, name='realizar_vistoria'),
+
+    # --- NOVAS ROTAS DE AÇÃO EXCLUSIVAS DO GESTOR ---
+    # 👥 Gestão de Usuários
+    path('gestor/aprovar-servidor/<int:pk>/', gestor_aprovar_servidor, name='gestor_aprovar_servidor'),
+    path('gestor/mudar-status-usuario/<int:pk>/', gestor_mudar_status_usuario, name='gestor_mudar_status_usuario'),
+    
+    # 🏠 Gestão de Quartos
+    path('gestor/status-quarto/<int:pk>/', gestor_status_quarto, name='gestor_status_quarto'),
+    
+    # 🚨 Disciplina
+    path('gestor/emitir-advertencia/', gestor_emitir_advertencia, name='gestor_emitir_advertencia'),
+    
+    # 💰 Custos
+    path('gestor/lancar-custos/', gestor_lancar_custos, name='gestor_lancar_custos'),
+    
+    # 📑 Relatórios (Exportação de Dados)
+    path('gestor/relatorio/excel/', gestor_exportar_csv, name='gestor_exportar_excel'),
 ]
 
 # Configuração para exibir fotos (Mídia) durante o desenvolvimento

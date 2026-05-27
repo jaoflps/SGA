@@ -26,9 +26,17 @@ class Bloco(models.Model):
         return self.nome
 
 class Quarto(models.Model):
+    STATUS_CHOICES = [
+        ('ATIVO', 'Ativo / Disponível'),
+        ('REFORMA', 'Interditado para Reforma'),
+    ]
+    
     numero = models.CharField(max_length=10)
     bloco = models.ForeignKey(Bloco, on_delete=models.CASCADE)
     capacidade = models.IntegerField(default=4)
+    
+    # Adicionado para a funcionalidade: "Fechar quarto para reforma"
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='ATIVO')
 
     def __str__(self):
         return f"{self.bloco.nome} - Quarto {self.numero}"
@@ -46,13 +54,14 @@ class Usuario(AbstractUser):
     cpf = models.CharField(max_length=11, unique=True)
     tipo = models.CharField(max_length=10, choices=TIPOS, default='ALUNO')
     foto = models.ImageField(upload_to='perfis/', null=True, blank=True, default='perfis/default.png')
-    
-    # Curso e Cidade agora como Relacionamentos (Models)
     curso = models.ForeignKey(Curso, on_delete=models.SET_NULL, null=True, blank=True)
     cidade = models.ForeignKey(Cidade, on_delete=models.SET_NULL, null=True, blank=True)
-    
     data_nascimento = models.DateField(null=True, blank=True)
     integridade = models.IntegerField(default=100) # 0 a 100%
+    
+    # Adicionado para as funcionalidades: "Aprovar servidores" e "Bloquear usuários"
+    aprovado_gestor = models.BooleanField(default=False, help_text="Define se o servidor foi validado pelo gestor.")
+    bloqueado = models.BooleanField(default=False, help_text="Indica se o usuário está suspenso do alojamento.")
 
     @property
     def idade(self):
@@ -72,6 +81,9 @@ class Usuario(AbstractUser):
 class Alocacao(models.Model):
     aluno = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='moradia')
     quarto = models.ForeignKey(Quarto, on_delete=models.CASCADE, related_name='moradores')
+    
+    # Adicionado para compor o histórico anual de alocações do Gestor
+    data_alocacao = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.aluno.username} no {self.quarto}"
@@ -100,6 +112,10 @@ class Reclamacao(models.Model):
     foto_depois = models.ImageField(upload_to='reparos/depois/', null=True, blank=True)
     data_inicio_reparo = models.DateTimeField(null=True, blank=True)
     data_fim_reparo = models.DateTimeField(null=True, blank=True)
+    
+    # Adicionados para funcionalidades: "Custos com manutenção" e "Ranking de manutenção"
+    custo_reparo = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    servidor_atendente = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name='atendimentos')
 
     @property
     def tempo_total(self):
@@ -109,9 +125,6 @@ class Reclamacao(models.Model):
             minutos, _ = divmod(rem, 60)
             return f"{delta.days}d {horas}h {minutos}min"
         return "Em execução"
-
-    def __str__(self):
-        return f"{self.titulo} - {self.status}"
 
     def __str__(self):
         return f"{self.titulo} ({self.get_categoria_display()})"
@@ -133,6 +146,9 @@ class Comunicado(models.Model):
     descricao = models.TextField()
     data_envio = models.DateTimeField(auto_now_add=True)
     autor = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Adicionado para Inteligência de Gestão: saber qual quarto está sofrendo a ocorrência/denúncia
+    quarto_relacionado = models.ForeignKey(Quarto, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.data_envio.strftime('%d/%m %H:%M')}"
@@ -161,3 +177,25 @@ class VistoriaQuarto(models.Model):
 
     def __str__(self):
         return f"Vistoria {self.quarto} - {self.data.strftime('%d/%m/%Y')}"
+
+# --- Novos Modelos Exclusivos para demandas do Gestor ---
+
+class CustoFixoMensal(models.Model):
+    """Modelo para acompanhar os custos de água e luz inseridos mensalmente pelo gestor"""
+    mes_referencia = models.DateField(help_text="Insira o primeiro dia do mês correspondente (ex: 01/05/2026)")
+    consumo_agua = models.DecimalField(max_digits=10, decimal_places=2)
+    consumo_luz = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Custos Finais de {self.mes_referencia.strftime('%m/%Y')}"
+
+
+class AdvertenciaDisciplinar(models.Model):
+    """Modelo para tratar a seção '🚨 Disciplina' e controle de reincidência de problemas"""
+    aluno = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='advertencias')
+    motivo = models.TextField()
+    data_emissao = models.DateField(auto_now_add=True)
+    gravidade = models.CharField(max_length=10, choices=[('LEVE', 'Leve'), ('MEDIA', 'Média'), ('GRAVE', 'Grave')], default='LEVE')
+
+    def __str__(self):
+        return f"Advertência para {self.aluno.username} - {self.data_emissao}"
