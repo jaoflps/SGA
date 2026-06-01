@@ -17,7 +17,7 @@
             <div class="col-md-8 col-lg-6">
                 
                 <div class="mb-3">
-                    <a href="{% if user.tipo == 'ALUNO' %}{% url 'home_aluno' %}{% else %}{% url 'home_servidor' %}{% endif %}" class="btn-back">
+                    <a href="{% if user.tipo == 'ALUNO' %}{% url 'home_aluno' %}{% elif user.tipo == 'SERVIDOR' %}{% url 'home_servidor' %}{% else %}{% url 'home_gestor' %}{% endif %}" class="btn-back">
                         <i class="fas fa-arrow-left mr-1"></i> Voltar ao Painel
                     </a>
                 </div>
@@ -59,7 +59,7 @@
                             {% if user.tipo == 'ALUNO' %}
                             <div class="col-12">
                                 <p class="info-label">Cidade de Origem</p>
-                                <p class="info-value">{{ user.cidade.nome }} - {{ user.uf }}</p>
+                                <p class="info-value">{% if user.cidade %}{{ user.cidade.nome }} - {{ user.cidade.estado }}{% else %}Não informado{% endif %}</p>
                             </div>
                             {% endif %}
                         </div>

@@ -1,6 +1,20 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import *
+from .models import (
+    AdvertenciaDisciplinar,
+    Alocacao,
+    Bloco,
+    Cidade,
+    Comunicado,
+    Curso,
+    CustoFixoMensal,
+    Quarto,
+    Reclamacao,
+    RegistroAcesso,
+    SolicitacaoTroca,
+    Usuario,
+    VistoriaQuarto,
+)
 
 # --- 🛠️ IMPLEMENTAÇÃO DE INLINES (Exigência Disciplina PSOO) ---
 

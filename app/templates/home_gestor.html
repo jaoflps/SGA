@@ -75,7 +75,7 @@
             <div class="d-flex align-items-center">
                 <span class="text-light me-4 small opacity-75">Sessão: <strong class="text-white">{{ request.user.username }}</strong></span>
                 <a href="/admin/" class="btn btn-sm btn-outline-light me-2 rounded-pill px-3"><i class="fa-solid fa-screwdriver-wrench me-1"></i> Admin</a>
-                <a href="#" class="btn btn-sm btn-danger rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-power-off"></i></a>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-danger rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-power-off"></i></a>
             </div>
         </div>
     </nav>
@@ -251,9 +251,12 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-end pe-4 py-3">
-                                        <a href="{% url 'gestor_status_quarto' pk=q.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if q.status == 'ATIVO' %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
-                                            {% if q.status == 'ATIVO' %}Interditar{% else %}Liberar Quarto{% endif %}
-                                        </a>
+                                        <form method="POST" action="{% url 'gestor_status_quarto' pk=q.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-semibold {% if q.status == 'ATIVO' %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                                                {% if q.status == 'ATIVO' %}Interditar{% else %}Liberar Quarto{% endif %}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -297,11 +300,17 @@
                                     </td>
                                     <td class="text-end pe-4 py-3">
                                         {% if not servidor.aprovado_gestor %}
-                                            <a href="{% url 'gestor_aprovar_servidor' pk=servidor.pk %}" class="btn btn-sm btn-warning rounded-pill px-3 me-1 fw-semibold">Aprovar</a>
+                                            <form method="POST" action="{% url 'gestor_aprovar_servidor' pk=servidor.pk %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-warning rounded-pill px-3 me-1 fw-semibold">Aprovar</button>
+                                            </form>
                                         {% endif %}
-                                        <a href="{% url 'gestor_mudar_status_usuario' pk=servidor.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if servidor.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
-                                            {% if servidor.bloqueado %}Reativar{% else %}Suspender{% endif %}
-                                        </a>
+                                        <form method="POST" action="{% url 'gestor_mudar_status_usuario' pk=servidor.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-semibold {% if servidor.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
+                                                {% if servidor.bloqueado %}Reativar{% else %}Suspender{% endif %}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -328,9 +337,12 @@
                                     </td>
                                     <td class="text-end pe-4 py-3">
                                         <button class="btn btn-sm btn-outline-warning rounded-pill px-3 me-1 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAdvertencia" onclick="document.getElementById('inputAlunoId').value='{{ aluno.id }}'"><i class="fa-solid fa-gavel me-1"></i> Punir</button>
-                                        <a href="{% url 'gestor_mudar_status_usuario' pk=aluno.pk %}" class="btn btn-sm rounded-pill px-3 fw-semibold {% if aluno.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
-                                            {% if aluno.bloqueado %}Reativar{% else %}Suspender{% endif %}
-                                        </a>
+                                        <form method="POST" action="{% url 'gestor_mudar_status_usuario' pk=aluno.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-semibold {% if aluno.bloqueado %}btn-success{% else %}btn-danger{% endif %}">
+                                                {% if aluno.bloqueado %}Reativar{% else %}Suspender{% endif %}
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -355,7 +367,12 @@
                                         <tr>
                                             <td class="ps-4 fw-bold text-dark">{{ r.username }}</td>
                                             <td><span class="badge bg-danger rounded-pill px-3 py-2">{{ r.num_adv }} Ocorrências</span></td>
-                                            <td class="text-end pe-4"><a href="{% url 'gestor_mudar_status_usuario' pk=r.pk %}" class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold">Suspender</a></td>
+                                            <td class="text-end pe-4">
+                                                <form method="POST" action="{% url 'gestor_mudar_status_usuario' pk=r.pk %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3 fw-semibold">Suspender</button>
+                                                </form>
+                                            </td>
                                         </tr>
                                         {% empty %}
                                         <tr><td colspan="3" class="text-center py-5 text-muted"><div class="icon-box bg-light mx-auto mb-3" style="width:60px; height:60px; font-size:2rem;"><i class="fa-solid fa-check text-success"></i></div>Nenhum aluno em estado crítico.</td></tr>

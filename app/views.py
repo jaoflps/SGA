@@ -1,14 +1,61 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
-from django.contrib.auth import authenticate, login
-from .models import *
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.views.decorators.http import require_POST
+from .models import (
+    AdvertenciaDisciplinar,
+    Alocacao,
+    Bloco,
+    Comunicado,
+    CustoFixoMensal,
+    Quarto,
+    Reclamacao,
+    RegistroAcesso,
+    SolicitacaoTroca,
+    Usuario,
+    VistoriaQuarto,
+)
 from django.utils import timezone
 
 # Novas importações necessárias para a inteligência analítica do Gestor
-from django.db.models import Count, Sum, Avg
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import ExtractHour
 import csv
 from django.http import HttpResponse
+from decimal import Decimal
+
+
+def is_aluno(user):
+    return user.is_authenticated and user.tipo == 'ALUNO' and user.is_active and not user.bloqueado
+
+
+def is_servidor(user):
+    return (
+        user.is_authenticated
+        and user.tipo == 'SERVIDOR'
+        and user.is_active
+        and not user.bloqueado
+        and user.aprovado_gestor
+    )
+
+
+def is_gestor(user):
+    return (
+        user.is_authenticated
+        and user.is_active
+        and not user.bloqueado
+        and (user.tipo in ('GESTOR', 'ADM') or user.is_staff)
+    )
+
+
+class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    role_test = staticmethod(lambda user: False)
+
+    def test_func(self):
+        return self.role_test(self.request.user)
+
 
 class IndexView(View):
     def get(self, request):
@@ -25,6 +72,12 @@ class LoginView(View):
         user = authenticate(request, cpf=cpf_digitado, password=senha_digitada)
         
         if user is not None:
+            if user.bloqueado or not user.is_active:
+                return render(request, 'login.html', {'erro': 'Usuário bloqueado. Procure a gestão.'})
+
+            if user.tipo == 'SERVIDOR' and not user.aprovado_gestor:
+                return render(request, 'login.html', {'erro': 'Servidor aguardando aprovação do gestor.'})
+
             login(request, user)
             if user.tipo == 'ALUNO':
                 return redirect('home_aluno')
@@ -37,7 +90,16 @@ class LoginView(View):
         else:
             return render(request, 'login.html', {'erro': 'CPF ou Senha incorretos'})
 
-class HomeAlunoView(View):
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+class HomeAlunoView(RoleRequiredMixin, View):
+    role_test = staticmethod(is_aluno)
+
     def get(self, request):
         # Busca a moradia e os colegas
         alocacao = Alocacao.objects.filter(aluno=request.user).first()
@@ -58,7 +120,7 @@ class HomeAlunoView(View):
         }
         return render(request, 'home_aluno.html', context)
 
-class PerfilView(View):
+class PerfilView(LoginRequiredMixin, View):
     def get(self, request):
         # Busca moradia para exibir no perfil
         moradia = Alocacao.objects.filter(aluno=request.user).first()
@@ -70,7 +132,9 @@ class PerfilView(View):
         return render(request, 'perfil.html', context)
 
 # --- REESTRUTURAÇÃO COMPLETA: HOME GESTOR COM TODAS AS INTEGRAÇÕES SOLICITADAS ---
-class HomeGestorView(View):
+class HomeGestorView(RoleRequiredMixin, View):
+    role_test = staticmethod(is_gestor)
+
     def get(self, request):
         # --- 👥 GESTÃO DE USUÁRIOS ---
         todos_alunos = Usuario.objects.filter(tipo='ALUNO').order_by('username')
@@ -107,7 +171,7 @@ class HomeGestorView(View):
         defeito_mais_comum = tipos_defeito_comuns['categoria'] if tipos_defeito_comuns else "N/A"
         
         # Ranking de manutenção: Servidores ordenados por quantidade de reparos resolvidos com sucesso
-        ranking_manutencao = Usuario.objects.filter(tipo='SERVIDOR').annotate(resolvidos=Count('atendimentos', filter=models.Q(atendimentos__status='Resolvido'))).order_by('-resolvidos')
+        ranking_manutencao = Usuario.objects.filter(tipo='SERVIDOR').annotate(resolvidos=Count('atendimentos', filter=Q(atendimentos__status='Resolvido'))).order_by('-resolvidos')
 
         # --- 💰 CUSTOS ---
         gastos_manutencao = Reclamacao.objects.aggregate(total=Sum('custo_reparo'))['total'] or 0
@@ -118,7 +182,7 @@ class HomeGestorView(View):
         consumo_luz = ultimo_custo.consumo_luz if ultimo_custo else 0
         
         total_despesas_atuais = gastos_manutencao + consumo_agua + consumo_luz
-        previsao_despesas = total_despesas_atuais * 1.10 # Acréscimo estatístico de 10% para provisionamento preventivo
+        previsao_despesas = total_despesas_atuais * Decimal('1.10') # Acréscimo estatístico de 10% para provisionamento preventivo
 
         # --- 🚨 DISCIPLINA ---
         advertencias = AdvertenciaDisciplinar.objects.all().order_by('-data_emissao')
@@ -159,42 +223,50 @@ class HomeGestorView(View):
 
 # --- Funções de Ação do Aluno ---
 
+@login_required
+@user_passes_test(is_aluno)
+@require_POST
 def criar_chamado(request):
-    if request.method == 'POST':
-        Reclamacao.objects.create(
-            aluno=request.user,
-            titulo=request.POST.get('titulo'),
-            categoria=request.POST.get('categoria'),
-            descricao=request.POST.get('descricao'),
-            urgente=request.POST.get('urgente') == 'on',
-            foto=request.FILES.get('foto'),
-            video=request.FILES.get('video')
-        )
+    Reclamacao.objects.create(
+        aluno=request.user,
+        titulo=request.POST.get('titulo'),
+        categoria=request.POST.get('categoria'),
+        descricao=request.POST.get('descricao'),
+        urgente=request.POST.get('urgente') == 'on',
+        foto=request.FILES.get('foto'),
+        video=request.FILES.get('video')
+    )
     return redirect('home_aluno')
 
+@login_required
+@user_passes_test(is_aluno)
+@require_POST
 def solicitar_troca(request):
-    if request.method == 'POST':
-        SolicitacaoTroca.objects.create(
-            aluno=request.user,
-            motivo=request.POST.get('motivo')
-        )
+    SolicitacaoTroca.objects.create(
+        aluno=request.user,
+        motivo=request.POST.get('motivo')
+    )
     return redirect('home_aluno')
 
+@login_required
+@user_passes_test(is_aluno)
+@require_POST
 def enviar_comunicado(request):
-    if request.method == 'POST':
-        tipo = request.POST.get('tipo')
-        anonimo = request.POST.get('anonimo') == 'on'
-        
-        Comunicado.objects.create(
-            tipo=tipo,
-            descricao=request.POST.get('descricao'),
-            autor=None if (tipo == 'DENUNCIA' or anonimo) else request.user
-        )
+    tipo = request.POST.get('tipo')
+    anonimo = request.POST.get('anonimo') == 'on'
+    
+    Comunicado.objects.create(
+        tipo=tipo,
+        descricao=request.POST.get('descricao'),
+        autor=None if (tipo == 'DENUNCIA' or anonimo) else request.user
+    )
     return redirect('home_aluno')
 
 # --- Funções de Ação do Servidor ---
 
-class HomeServidorView(View):
+class HomeServidorView(RoleRequiredMixin, View):
+    role_test = staticmethod(is_servidor)
+
     def get(self, request):
         chamados = Reclamacao.objects.all().order_by('-urgente', '-data_criacao')
         context = {
@@ -204,6 +276,9 @@ class HomeServidorView(View):
         }
         return render(request, 'home_servidor.html', context)
 
+@login_required
+@user_passes_test(is_servidor)
+@require_POST
 def iniciar_reparo(request, pk):
     chamado = get_object_or_404(Reclamacao, pk=pk)
     chamado.status = 'Em Andamento'
@@ -212,55 +287,67 @@ def iniciar_reparo(request, pk):
     chamado.save()
     return redirect('home_servidor')
 
+@login_required
+@user_passes_test(is_servidor)
+@require_POST
 def concluir_reparo(request, pk):
-    if request.method == 'POST':
-        chamado = get_object_or_404(Reclamacao, pk=pk)
-        chamado.status = 'Resolvido'
-        chamado.data_fim_reparo = timezone.now()
-        chamado.foto_depois = request.FILES.get('foto_depois')
+    chamado = get_object_or_404(Reclamacao, pk=pk)
+    chamado.status = 'Resolvido'
+    chamado.data_fim_reparo = timezone.now()
+    chamado.foto_depois = request.FILES.get('foto_depois')
+    
+    # Coleta custo informado pelo servidor no momento do encerramento
+    custo = request.POST.get('custo_reparo')
+    if custo:
+        chamado.custo_reparo = custo
         
-        # Coleta custo informado pelo servidor no momento do encerramento
-        custo = request.POST.get('custo_reparo')
-        if custo:
-            chamado.custo_reparo = custo
-            
-        chamado.save()
+    chamado.save()
     return redirect('home_servidor')
 
+@login_required
+@user_passes_test(is_servidor)
+@require_POST
 def registrar_movimentacao(request):
-    if request.method == 'POST':
-        tipo = request.POST.get('tipo')
-        aluno_id = request.POST.get('aluno')
-        RegistroAcesso.objects.create(
-            tipo=tipo,
-            aluno_id=aluno_id if aluno_id else None,
-            visitor_nome=request.POST.get('visitante_nome'),
-            visitante_documento=request.POST.get('visitante_documento')
-        )
+    tipo = request.POST.get('tipo')
+    aluno_id = request.POST.get('aluno')
+    RegistroAcesso.objects.create(
+        tipo=tipo,
+        aluno_id=aluno_id if aluno_id else None,
+        visitante_nome=request.POST.get('visitante_nome'),
+        visitante_documento=request.POST.get('visitante_documento')
+    )
     return redirect('home_servidor')
 
+@login_required
+@user_passes_test(is_servidor)
+@require_POST
 def realizar_vistoria(request):
-    if request.method == 'POST':
-        VistoriaQuarto.objects.create(
-            quarto_id=request.POST.get('quarto'),
-            servidor=request.user,
-            cama_organizada='cama' in request.POST,
-            danos='danos' in request.POST,
-            limpeza='limpeza' in request.POST,
-            itens_proibidos='itens' in request.POST,
-            observacoes=request.POST.get('observacoes'),
-            foto_vistoria=request.FILES.get('foto')
-        )
+    VistoriaQuarto.objects.create(
+        quarto_id=request.POST.get('quarto'),
+        servidor=request.user,
+        cama_organizada='cama' in request.POST,
+        danos='danos' in request.POST,
+        limpeza='limpeza' in request.POST,
+        itens_proibidos='itens' in request.POST,
+        observacoes=request.POST.get('observacoes'),
+        foto_vistoria=request.FILES.get('foto')
+    )
     return redirect('home_servidor')
 
 # --- NOVAS FUNÇÕES DE AÇÃO OPERACIONAIS PARA O GESTOR ---
 
+@login_required
+@user_passes_test(is_gestor)
+@require_POST
 def gestor_aprovar_servidor(request, pk):
     servidor = get_object_or_404(Usuario, pk=pk, tipo='SERVIDOR')
     servidor.aprovado_gestor = True
     servidor.save()
     return redirect('home_gestor')
 
+@login_required
+@user_passes_test(is_gestor)
+@require_POST
 def gestor_mudar_status_usuario(request, pk):
     usuario = get_object_or_404(Usuario, pk=pk)
     # Inverte o status de bloqueio do usuário selecionado
@@ -269,6 +356,9 @@ def gestor_mudar_status_usuario(request, pk):
     usuario.save()
     return redirect('home_gestor')
 
+@login_required
+@user_passes_test(is_gestor)
+@require_POST
 def gestor_status_quarto(request, pk):
     quarto = get_object_or_404(Quarto, pk=pk)
     # Alterna o status do quarto entre ATIVO e REFORMA
@@ -279,26 +369,32 @@ def gestor_status_quarto(request, pk):
     quarto.save()
     return redirect('home_gestor')
 
+@login_required
+@user_passes_test(is_gestor)
+@require_POST
 def gestor_emitir_advertencia(request):
-    if request.method == 'POST':
-        AdvertenciaDisciplinar.objects.create(
-            aluno_id=request.POST.get('aluno'),
-            motivo=request.POST.get('motivo'),
-            gravidade=request.POST.get('gravidade')
-        )
+    AdvertenciaDisciplinar.objects.create(
+        aluno_id=request.POST.get('aluno'),
+        motivo=request.POST.get('motivo'),
+        gravidade=request.POST.get('gravidade')
+    )
     return redirect('home_gestor')
 
+@login_required
+@user_passes_test(is_gestor)
+@require_POST
 def gestor_lancar_custos(request):
-    if request.method == 'POST':
-        CustoFixoMensal.objects.create(
-            mes_referencia=request.POST.get('mes_referencia'),
-            consumo_agua=request.POST.get('consumo_agua'),
-            consumo_luz=request.POST.get('consumo_luz')
-        )
+    CustoFixoMensal.objects.create(
+        mes_referencia=request.POST.get('mes_referencia'),
+        consumo_agua=request.POST.get('consumo_agua'),
+        consumo_luz=request.POST.get('consumo_luz')
+    )
     return redirect('home_gestor')
 
 # --- OPERAÇÕES DE EXPORTAÇÃO DE RELATÓRIOS (EXCEL/CSV AUTOMÁTICO) ---
 
+@login_required
+@user_passes_test(is_gestor)
 def gestor_exportar_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="historico_reparos.csv"'

@@ -3,8 +3,28 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Importamos todas as views do seu app
-from app.views import *
+from app.views import (
+    HomeAlunoView,
+    HomeGestorView,
+    HomeServidorView,
+    IndexView,
+    LoginView,
+    PerfilView,
+    concluir_reparo,
+    criar_chamado,
+    enviar_comunicado,
+    gestor_aprovar_servidor,
+    gestor_emitir_advertencia,
+    gestor_exportar_csv,
+    gestor_lancar_custos,
+    gestor_mudar_status_usuario,
+    gestor_status_quarto,
+    iniciar_reparo,
+    logout_view,
+    realizar_vistoria,
+    registrar_movimentacao,
+    solicitar_troca,
+)
 
 urlpatterns = [
     # Admin do Django
@@ -13,6 +33,7 @@ urlpatterns = [
     # Autenticação e Index
     path('', IndexView.as_view(), name='index'),
     path('login/', LoginView.as_view(), name='login'),
+    path('logout/', logout_view, name='logout'),
     
     # Dashboards (Paineis)
     path('aluno/', HomeAlunoView.as_view(), name='home_aluno'),

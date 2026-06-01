@@ -108,7 +108,7 @@ class Reclamacao(models.Model):
     status = models.CharField(max_length=20, default='Pendente')
     data_criacao = models.DateTimeField(auto_now_add=True)
 
-    oto_antes = models.ImageField(upload_to='reparos/antes/', null=True, blank=True) # Já era o 'foto' antigo
+    foto_antes = models.ImageField(upload_to='reparos/antes/', null=True, blank=True) # Já era o 'foto' antigo
     foto_depois = models.ImageField(upload_to='reparos/depois/', null=True, blank=True)
     data_inicio_reparo = models.DateTimeField(null=True, blank=True)
     data_fim_reparo = models.DateTimeField(null=True, blank=True)
